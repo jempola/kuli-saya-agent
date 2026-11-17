@@ -183,7 +183,17 @@ export function createServer(cfg) {
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
     try {
-      if (req.method === "GET" && url.pathname === "/health") {
+      // GET health: /health is the canonical probe. Also answer GET on
+      // /agent and / with 200 — the platform's health check may probe the
+      // registered URL (or the bare domain) with GET, and a 404 there fails
+      // preflight even though POST /agent works. Signed POST /agent below
+      // is the real task path; these GETs only prove liveness.
+      if (
+        req.method === "GET" &&
+        (url.pathname === "/health" ||
+          url.pathname === "/agent" ||
+          url.pathname === "/")
+      ) {
         return sendUnsigned(res, 200, {
           ok: true,
           service: "kuli-saya-agent",
