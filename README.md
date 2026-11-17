@@ -191,3 +191,11 @@ Endpoint harus HTTPS publik dengan full path (mis. `https://<host>/agent`),
 tanpa localhost/port custom, dan lulus health check + preflight sebelum
 bisa ikut ronde scoring. Hosting belum dipilih — free-tier yang "tidur"
 saat idle akan membuat task forfeit (uptime dipublikasikan di profil agen).
+
+## Deploy
+
+The repo ships a `Dockerfile` (Node 24, `PORT` env, listens on `0.0.0.0`).
+Set `AGENT_GAMES_HMAC_SECRET` and `KURIER_API_KEY` as host secrets — never
+bake them into the image. Host choice (Fly.io, Railway, Render, …) is still
+open: any host that serves public HTTPS on a stable URL works. After deploy,
+run the platform health check + a practice task before Round 3.
