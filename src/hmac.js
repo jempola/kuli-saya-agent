@@ -18,7 +18,7 @@ export const HEADER_NAME = "x-agent-games-signature";
 export function signBody(secret, rawBody) {
   const body = Buffer.isBuffer(rawBody) ? rawBody : Buffer.from(rawBody);
   return crypto
-    .createHmac(HMAC_ALGORITHM, secret)
+    .createHmac(HMAC_ALGORITHM, String(secret).trim())
     .update(body)
     .digest("hex");
 }
@@ -33,8 +33,16 @@ function safeEqual(a, b) {
 export function verifyBody(secret, rawBody, headerValue) {
   if (!secret || !headerValue) return false;
   const body = Buffer.isBuffer(rawBody) ? rawBody : Buffer.from(rawBody);
-  const digest = crypto.createHmac(HMAC_ALGORITHM, secret).update(body).digest();
-  const header = String(headerValue).trim();
+  // Trim the secret: copy-paste from the dashboard often adds a trailing
+  // space/newline, which would otherwise break every verification.
+  const digest = crypto
+    .createHmac(HMAC_ALGORITHM, String(secret).trim())
+    .update(body)
+    .digest();
+  // Strip an optional "sha256=" prefix (GitHub-style header format).
+  const header = String(headerValue)
+    .trim()
+    .replace(/^sha256=/i, "");
   // Hex (expected) …
   if (safeEqual(digest.toString("hex"), header.toLowerCase())) return true;
   // … or base64 (fallback, in case the platform encodes it that way).
